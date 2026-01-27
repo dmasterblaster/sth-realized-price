@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>STH Realized Price + 200D MA</title>
+
+  <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+
+  <style>
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      background:#ffffff;
+      color:#111;
+    }
+    #chart{
+      width:100vw;
+      height:100vh;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="chart"></div>
+
+<script>
+function toNum(x){
+  const n = Number(x);
+  return Number.isFinite(n) ? n : null;
+}
+
+async function loadChart(){
+  try{
+    const res = await fetch("data/sth-realized-price.json", { cache: "no-store" });
+    if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+
+    const rows = await res.json();
+    if (!Array.isArray(rows) || rows.length === 0) throw new Error("JSON is empty or not an array.");
+
+    const pts = [];
+    for (const r of rows){
+      if (!r || !r.date) continue;
+      const d = new Date(String(r.date));
+      if (Number.isNaN(d.getTime())) continue;
+
+      pts.push({
+        dateStr: String(r.date),
+        dateObj: d,
+        price: toNum(r.price),
+        ma200: toNum(r.ma200),
+        sth: toNum(r.sth_realized),
+      });
+    }
+
+    if (pts.length === 0) throw new Error("No valid datapoints after parsing.");
+
+    // Sort ascending so Plotly draws correctly
+    pts.sort((a,b) => a.dateObj - b.dateObj);
+
+    const dates = pts.map(p => p.dateStr);
+    const spot  = pts.map(p => p.price);
+    const ma200 = pts.map(p => p.ma200);
+    const sth   = pts.map(p => p.sth);
+
+    const traces = [
+      {
+        x: dates,
+        y: spot,
+        type: "scatter",
+        mode: "lines",
+        name: "Bitcoin Spot Price",
+        line: { width: 2.5, color: "#f57c00" },
+        fill: "tozeroy",
+        fillcolor: "rgba(245,124,0,0.14)",
+        connectgaps: true,
+        hovertemplate: "BTC: $%{y:,.0f}<br>%{x}<extra></extra>"
+      },
+      {
+        x: dates,
+        y: ma200,
+        type: "scatter",
+        mode: "lines",
+        name: "BTC, 200-Day m.a.",
+        line: { width: 3, color: "#e53935" },
+        connectgaps: true,
+        hovertemplate: "200D MA: $%{y:,.0f}<br>%{x}<extra></extra>"
+      },
+      {
+        x: dates,
+        y: sth,
+        type: "scatter",
+        mode: "lines",
+        name: "Short-Term Holder Realized Price",
+        line: { width: 3, color: "#1e40af" },
+        connectgaps: true,
+        hovertemplate: "STH Realized: $%{y:,.0f}<br>%{x}<extra></extra>"
+      }
+    ];
+
+    const layout = {
+      title: {
+        text: "Bitcoin 200-Day Moving Average and STH Realized Price",
+        x: 0.02,
+        xanchor: "left",
+        font: { size: 34, color: "#111" }
+      },
+
+      xaxis: {
+        title: "",
+        type: "date",
+        showgrid: true,
+        gridcolor: "rgba(0,0,0,0.18)",
+        griddash: "dot",
+        tickfont: { color: "#222", size: 14 },
+        showline: true,
+        linecolor: "#111",
+        mirror: true,
+        ticks: "outside"
+      },
+
+      yaxis: {
+        title: "Price (USD)",
+        showgrid: true,
+        gridcolor: "rgba(0,0,0,0.18)",
+        griddash: "dot",
+        tickprefix: "$",
+        tickformat: ",",
+        tickfont: { color: "#222", size: 14 },
+        titlefont: { color: "#111", size: 18 },
+        showline: true,
+        linecolor: "#111",
+        mirror: true,
+        ticks: "outside"
+      },
+
+      legend: {
+        x: 0.08,
+        y: 0.92,
+        xanchor: "left",
+        yanchor: "top",
+        bgcolor: "rgba(255,255,255,0.95)",
+        bordercolor: "rgba(0,0,0,0.35)",
+        borderwidth: 1,
+        font: { size: 18, color: "#111" }
+      },
+
+      // watermark (drop your file at assets/tbl-logo.png)
+      images: [
+        {
+          source: "assets/tbl-logo.png",
+          xref: "paper",
+          yref: "paper",
+          x: 0.5,
+          y: 0.50,
+          sizex: 0.65,
+          sizey: 0.65,
+          xanchor: "center",
+          yanchor: "middle",
+          opacity: 0.06,
+          layer: "below"
+        }
+      ],
+
+      annotations: [
+        {
+          xref: "paper",
+          yref: "paper",
+          x: 0.01,
+          y: 0.02,
+          xanchor: "left",
+          yanchor: "bottom",
+          text: "Source: The Bitcoin Layer, Bitcoin Magazine Pro",
+          showarrow: false,
+          font: { size: 12, color: "rgba(0,0,0,0.65)" }
+        }
+      ],
+
+      plot_bgcolor: "#ffffff",
+      paper_bgcolor: "#ffffff",
+      margin: { l: 90, r: 50, t: 90, b: 70 }
+    };
+
+    Plotly.newPlot("chart", traces, layout, {
+      responsive: true,
+      displaylogo: false
+    });
+
+  } catch (err){
+    console.error(err);
+    document.getElementById("chart").innerHTML =
+      "<p style='color:#cf222e;padding:20px;'>Error loading chart data. Open DevTools Console for details.</p>";
+  }
+}
+
+loadChart();
+</script>
+</body>
+</html>
