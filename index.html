@@ -41,6 +41,7 @@ async function loadChart(){
     const pts = [];
     for (const r of rows){
       if (!r || !r.date) continue;
+
       const d = new Date(String(r.date));
       if (Number.isNaN(d.getTime())) continue;
 
@@ -55,13 +56,23 @@ async function loadChart(){
 
     if (pts.length === 0) throw new Error("No valid datapoints after parsing.");
 
-    // Sort ascending so Plotly draws correctly
+    // ✅ Sort ascending
     pts.sort((a,b) => a.dateObj - b.dateObj);
 
-    const dates = pts.map(p => p.dateStr);
-    const spot  = pts.map(p => p.price);
-    const ma200 = pts.map(p => p.ma200);
-    const sth   = pts.map(p => p.sth);
+    // ✅ Latest date
+    const latest = pts[pts.length - 1].dateObj;
+
+    // ✅ Cutoff = 3 years back
+    const cutoff = new Date(latest);
+    cutoff.setFullYear(latest.getFullYear() - 3);
+
+    // ✅ Filter to trailing 3 years
+    const filtered = pts.filter(p => p.dateObj >= cutoff);
+
+    const dates = filtered.map(p => p.dateStr);
+    const spot  = filtered.map(p => p.price);
+    const ma200 = filtered.map(p => p.ma200);
+    const sth   = filtered.map(p => p.sth);
 
     const traces = [
       {
@@ -107,7 +118,6 @@ async function loadChart(){
       },
 
       xaxis: {
-        title: "",
         type: "date",
         showgrid: true,
         gridcolor: "rgba(0,0,0,0.18)",
@@ -145,7 +155,7 @@ async function loadChart(){
         font: { size: 18, color: "#111" }
       },
 
-      // watermark (drop your file at assets/tbl-logo.png)
+      // watermark
       images: [
         {
           source: "assets/tbl-logo.png",
@@ -159,20 +169,6 @@ async function loadChart(){
           yanchor: "middle",
           opacity: 0.06,
           layer: "below"
-        }
-      ],
-
-      annotations: [
-        {
-          xref: "paper",
-          yref: "paper",
-          x: 0.01,
-          y: 0.02,
-          xanchor: "left",
-          yanchor: "bottom",
-          text: "Source: The Bitcoin Layer, Bitcoin Magazine Pro",
-          showarrow: false,
-          font: { size: 12, color: "rgba(0,0,0,0.65)" }
         }
       ],
 
