@@ -131,12 +131,13 @@ async function loadChart(){
         titlefont: { size: 18, color: "#111" }
       },
 
+      /* ✅ CLEAN HORIZONTAL LEGEND (LIKE OTHER CHARTS) */
       legend: {
-        x: 0.08,
-        y: 0.92,
-        bgcolor: "rgba(255,255,255,0.95)",
-        bordercolor: "rgba(0,0,0,0.35)",
-        borderwidth: 1,
+        orientation: "h",
+        x: 0.02,
+        y: 1.08,
+        bgcolor: "rgba(0,0,0,0)",
+        borderwidth: 0,
         font: { size: 18, color: "#111" }
       },
 
@@ -178,7 +179,7 @@ async function loadChart(){
 
       plot_bgcolor: "#ffffff",
       paper_bgcolor: "#ffffff",
-      margin: { l: 90, r: 50, t: 40, b: 70 }
+      margin: { l: 90, r: 50, t: 70, b: 70 }
     };
 
     Plotly.newPlot("chart", traces, layout, {
