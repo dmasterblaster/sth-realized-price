@@ -59,10 +59,10 @@ async function loadChart(){
 
     if (!pts.length) throw new Error("No valid points");
 
-    // Sort ascending
+    // sort
     pts.sort((a,b) => a.dateObj - b.dateObj);
 
-    // Trailing 3 years
+    // trailing 3 years
     const latest = pts[pts.length - 1].dateObj;
     const cutoff = new Date(latest);
     cutoff.setFullYear(latest.getFullYear() - 3);
@@ -115,10 +115,7 @@ async function loadChart(){
         showgrid: true,
         gridcolor: "rgba(0,0,0,0.18)",
         griddash: "dot",
-        showline: true,
-        linecolor: "#111",
-        mirror: true,
-        ticks: "outside",
+        zeroline: false,
         tickfont: { size: 14, color: "#222" }
       },
 
@@ -127,12 +124,9 @@ async function loadChart(){
         showgrid: true,
         gridcolor: "rgba(0,0,0,0.18)",
         griddash: "dot",
+        zeroline: false,
         tickprefix: "$",
         tickformat: ",",
-        showline: true,
-        linecolor: "#111",
-        mirror: true,
-        ticks: "outside",
         tickfont: { size: 14, color: "#222" },
         titlefont: { size: 18, color: "#111" }
       },
@@ -146,7 +140,7 @@ async function loadChart(){
         font: { size: 18, color: "#111" }
       },
 
-      /* WATERMARK LOGO */
+      /* watermark */
       images: [
         {
           source: "assets/tbl-logo.png",
@@ -163,7 +157,7 @@ async function loadChart(){
         }
       ],
 
-      /* BRAND TAG BOTTOM RIGHT */
+      /* brand label bottom right */
       annotations: [
         {
           xref: "paper",
