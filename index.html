@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>STH Realized Price + 200D MA</title>
+  <title>STH Realized Price</title>
 
   <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
 
@@ -36,7 +36,9 @@ async function loadChart(){
     if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
 
     const rows = await res.json();
-    if (!Array.isArray(rows) || rows.length === 0) throw new Error("JSON empty.");
+    if (!Array.isArray(rows) || rows.length === 0){
+      throw new Error("JSON empty");
+    }
 
     const pts = [];
 
@@ -44,10 +46,10 @@ async function loadChart(){
       if (!r.date) continue;
 
       const d = new Date(String(r.date));
-      if (Number.isNaN(d.getTime())) continue;
+      if (isNaN(d.getTime())) continue;
 
       pts.push({
-        dateStr: String(r.date),
+        dateStr: r.date,
         dateObj: d,
         price: toNum(r.price),
         ma200: toNum(r.ma200),
@@ -55,20 +57,22 @@ async function loadChart(){
       });
     }
 
-    if (!pts.length) throw new Error("No valid rows");
+    if (!pts.length) throw new Error("No valid points");
 
+    // Sort ascending
     pts.sort((a,b) => a.dateObj - b.dateObj);
 
+    // Trailing 3 years
     const latest = pts[pts.length - 1].dateObj;
     const cutoff = new Date(latest);
     cutoff.setFullYear(latest.getFullYear() - 3);
 
-    const filtered = pts.filter(p => p.dateObj >= cutoff);
+    const f = pts.filter(p => p.dateObj >= cutoff);
 
-    const dates = filtered.map(p => p.dateStr);
-    const spot  = filtered.map(p => p.price);
-    const ma200 = filtered.map(p => p.ma200);
-    const sth   = filtered.map(p => p.sth);
+    const dates = f.map(p => p.dateStr);
+    const spot  = f.map(p => p.price);
+    const ma200 = f.map(p => p.ma200);
+    const sth   = f.map(p => p.sth);
 
     const traces = [
       {
@@ -77,9 +81,9 @@ async function loadChart(){
         type: "scatter",
         mode: "lines",
         name: "Bitcoin Spot Price",
-        line: { width: 2.5, color: "#f57c00" },
+        line: { width: 2.5, color: "#ff7a00" },
         fill: "tozeroy",
-        fillcolor: "rgba(245,124,0,0.14)",
+        fillcolor: "rgba(255,122,0,0.14)",
         connectgaps: true,
         hovertemplate: "BTC: $%{y:,.0f}<br>%{x}<extra></extra>"
       },
@@ -88,7 +92,7 @@ async function loadChart(){
         y: ma200,
         type: "scatter",
         mode: "lines",
-        name: "BTC 200-Day MA",
+        name: "BTC, 200-Day m.a.",
         line: { width: 3, color: "#e53935" },
         connectgaps: true,
         hovertemplate: "200D MA: $%{y:,.0f}<br>%{x}<extra></extra>"
@@ -98,7 +102,7 @@ async function loadChart(){
         y: sth,
         type: "scatter",
         mode: "lines",
-        name: "STH Realized Price",
+        name: "Short-Term Holder Realized Price",
         line: { width: 3, color: "#1e40af" },
         connectgaps: true,
         hovertemplate: "STH Realized: $%{y:,.0f}<br>%{x}<extra></extra>"
@@ -106,17 +110,16 @@ async function loadChart(){
     ];
 
     const layout = {
-
       xaxis: {
         type: "date",
         showgrid: true,
         gridcolor: "rgba(0,0,0,0.18)",
         griddash: "dot",
-        tickfont: { color: "#222", size: 14 },
         showline: true,
         linecolor: "#111",
         mirror: true,
-        ticks: "outside"
+        ticks: "outside",
+        tickfont: { size: 14, color: "#222" }
       },
 
       yaxis: {
@@ -126,25 +129,24 @@ async function loadChart(){
         griddash: "dot",
         tickprefix: "$",
         tickformat: ",",
-        tickfont: { color: "#222", size: 14 },
-        titlefont: { color: "#111", size: 18 },
         showline: true,
         linecolor: "#111",
         mirror: true,
-        ticks: "outside"
+        ticks: "outside",
+        tickfont: { size: 14, color: "#222" },
+        titlefont: { size: 18, color: "#111" }
       },
 
       legend: {
         x: 0.08,
         y: 0.92,
-        xanchor: "left",
-        yanchor: "top",
         bgcolor: "rgba(255,255,255,0.95)",
         bordercolor: "rgba(0,0,0,0.35)",
         borderwidth: 1,
         font: { size: 18, color: "#111" }
       },
 
+      /* WATERMARK LOGO */
       images: [
         {
           source: "assets/tbl-logo.png",
@@ -161,19 +163,20 @@ async function loadChart(){
         }
       ],
 
+      /* BRAND TAG BOTTOM RIGHT */
       annotations: [
         {
           xref: "paper",
           yref: "paper",
-          x: 0.02,
-          y: 0.96,
-          xanchor: "left",
-          yanchor: "top",
+          x: 0.98,
+          y: 0.04,
+          xanchor: "right",
+          yanchor: "bottom",
           text: "Charts by: @TheBitcoinLayer",
           showarrow: false,
           font: { size: 14, color: "#111" },
-          bgcolor: "rgba(255,255,255,0.75)",
-          bordercolor: "rgba(0,0,0,0.15)",
+          bgcolor: "rgba(255,255,255,0.85)",
+          bordercolor: "rgba(0,0,0,0.25)",
           borderwidth: 1,
           borderpad: 6
         }
@@ -181,7 +184,7 @@ async function loadChart(){
 
       plot_bgcolor: "#ffffff",
       paper_bgcolor: "#ffffff",
-      margin: { l: 90, r: 50, t: 20, b: 70 }
+      margin: { l: 90, r: 50, t: 40, b: 70 }
     };
 
     Plotly.newPlot("chart", traces, layout, {
@@ -192,7 +195,7 @@ async function loadChart(){
   } catch (err){
     console.error(err);
     document.getElementById("chart").innerHTML =
-      "<p style='color:#cf222e;padding:20px;'>Error loading chart data</p>";
+      "<p style='color:red;padding:20px;'>Error loading chart data</p>";
   }
 }
 
