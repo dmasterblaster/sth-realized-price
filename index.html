@@ -56,17 +56,17 @@ async function loadChart(){
 
     if (pts.length === 0) throw new Error("No valid datapoints after parsing.");
 
-    // ✅ Sort ascending
+    // Sort ascending
     pts.sort((a,b) => a.dateObj - b.dateObj);
 
-    // ✅ Latest date
+    // Latest date
     const latest = pts[pts.length - 1].dateObj;
 
-    // ✅ Cutoff = 3 years back
+    // Cutoff = 3 years back from latest
     const cutoff = new Date(latest);
     cutoff.setFullYear(latest.getFullYear() - 3);
 
-    // ✅ Filter to trailing 3 years
+    // Filter to trailing 3 years
     const filtered = pts.filter(p => p.dateObj >= cutoff);
 
     const dates = filtered.map(p => p.dateStr);
@@ -110,13 +110,6 @@ async function loadChart(){
     ];
 
     const layout = {
-      title: {
-        text: "Bitcoin 200-Day Moving Average and STH Realized Price",
-        x: 0.02,
-        xanchor: "left",
-        font: { size: 34, color: "#111" }
-      },
-
       xaxis: {
         type: "date",
         showgrid: true,
@@ -126,7 +119,9 @@ async function loadChart(){
         showline: true,
         linecolor: "#111",
         mirror: true,
-        ticks: "outside"
+        ticks: "outside",
+        // ✅ Hard force trailing 3 years
+        range: [cutoff.toISOString(), latest.toISOString()]
       },
 
       yaxis: {
@@ -155,7 +150,6 @@ async function loadChart(){
         font: { size: 18, color: "#111" }
       },
 
-      // watermark
       images: [
         {
           source: "assets/tbl-logo.png",
@@ -174,7 +168,7 @@ async function loadChart(){
 
       plot_bgcolor: "#ffffff",
       paper_bgcolor: "#ffffff",
-      margin: { l: 90, r: 50, t: 90, b: 70 }
+      margin: { l: 90, r: 50, t: 20, b: 70 }
     };
 
     Plotly.newPlot("chart", traces, layout, {
