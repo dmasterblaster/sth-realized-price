@@ -22,7 +22,7 @@
 </head>
 
 <body>
-  <div id="chart"></div>
+<div id="chart"></div>
 
 <script>
 function toNum(x){
@@ -36,11 +36,12 @@ async function loadChart(){
     if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
 
     const rows = await res.json();
-    if (!Array.isArray(rows) || rows.length === 0) throw new Error("JSON is empty or not an array.");
+    if (!Array.isArray(rows) || rows.length === 0) throw new Error("JSON empty.");
 
     const pts = [];
+
     for (const r of rows){
-      if (!r || !r.date) continue;
+      if (!r.date) continue;
 
       const d = new Date(String(r.date));
       if (Number.isNaN(d.getTime())) continue;
@@ -50,23 +51,18 @@ async function loadChart(){
         dateObj: d,
         price: toNum(r.price),
         ma200: toNum(r.ma200),
-        sth: toNum(r.sth_realized),
+        sth: toNum(r.sth_realized)
       });
     }
 
-    if (pts.length === 0) throw new Error("No valid datapoints after parsing.");
+    if (!pts.length) throw new Error("No valid rows");
 
-    // Sort ascending
     pts.sort((a,b) => a.dateObj - b.dateObj);
 
-    // Latest date
     const latest = pts[pts.length - 1].dateObj;
-
-    // Cutoff = 3 years back from latest
     const cutoff = new Date(latest);
     cutoff.setFullYear(latest.getFullYear() - 3);
 
-    // Filter to trailing 3 years
     const filtered = pts.filter(p => p.dateObj >= cutoff);
 
     const dates = filtered.map(p => p.dateStr);
@@ -92,7 +88,7 @@ async function loadChart(){
         y: ma200,
         type: "scatter",
         mode: "lines",
-        name: "BTC, 200-Day m.a.",
+        name: "BTC 200-Day MA",
         line: { width: 3, color: "#e53935" },
         connectgaps: true,
         hovertemplate: "200D MA: $%{y:,.0f}<br>%{x}<extra></extra>"
@@ -102,7 +98,7 @@ async function loadChart(){
         y: sth,
         type: "scatter",
         mode: "lines",
-        name: "Short-Term Holder Realized Price",
+        name: "STH Realized Price",
         line: { width: 3, color: "#1e40af" },
         connectgaps: true,
         hovertemplate: "STH Realized: $%{y:,.0f}<br>%{x}<extra></extra>"
@@ -110,6 +106,7 @@ async function loadChart(){
     ];
 
     const layout = {
+
       xaxis: {
         type: "date",
         showgrid: true,
@@ -119,9 +116,7 @@ async function loadChart(){
         showline: true,
         linecolor: "#111",
         mirror: true,
-        ticks: "outside",
-        // ✅ Hard force trailing 3 years
-        range: [cutoff.toISOString(), latest.toISOString()]
+        ticks: "outside"
       },
 
       yaxis: {
@@ -156,13 +151,31 @@ async function loadChart(){
           xref: "paper",
           yref: "paper",
           x: 0.5,
-          y: 0.50,
+          y: 0.5,
           sizex: 0.65,
           sizey: 0.65,
           xanchor: "center",
           yanchor: "middle",
           opacity: 0.06,
           layer: "below"
+        }
+      ],
+
+      annotations: [
+        {
+          xref: "paper",
+          yref: "paper",
+          x: 0.02,
+          y: 0.96,
+          xanchor: "left",
+          yanchor: "top",
+          text: "Charts by: @TheBitcoinLayer",
+          showarrow: false,
+          font: { size: 14, color: "#111" },
+          bgcolor: "rgba(255,255,255,0.75)",
+          bordercolor: "rgba(0,0,0,0.15)",
+          borderwidth: 1,
+          borderpad: 6
         }
       ],
 
@@ -179,7 +192,7 @@ async function loadChart(){
   } catch (err){
     console.error(err);
     document.getElementById("chart").innerHTML =
-      "<p style='color:#cf222e;padding:20px;'>Error loading chart data. Open DevTools Console for details.</p>";
+      "<p style='color:#cf222e;padding:20px;'>Error loading chart data</p>";
   }
 }
 
